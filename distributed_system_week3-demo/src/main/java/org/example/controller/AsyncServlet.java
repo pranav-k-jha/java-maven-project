@@ -19,7 +19,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 @WebServlet(urlPatterns = "longtask", asyncSupported = true)
 public class AsyncServlet extends HttpServlet {
 
-    private BlockingQueue<AsyncContext> acs = new LinkedBlockingQueue<>();
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private BlockingQueue<AsyncContext> acs = new LinkedBlockingQueue<>();
     private final Executor executor = Executors.newFixedThreadPool(4);
 
     @Override
