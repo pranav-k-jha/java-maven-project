@@ -1,1 +1,6 @@
-org\example\test\WebServletTest.class
+org/example/test/WebServletTest.class
+org/example/test/AudioClientTestJUnit.class
+org/example/test/LineChartPlotter.class
+org/example/test/AudioClientTest$PostRequestTask.class
+org/example/test/AudioClientTest$GetRequestTask.class
+org/example/test/AudioClientTest.class
