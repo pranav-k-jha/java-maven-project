@@ -42,7 +42,7 @@ public class EmbeddingJettyStarter {
          * context setting the configuration properties
          */
         
-        String contextPath = "/coen6317";
+        String contextPath = "/coen6731";
         URI webResourceBase = findWebResourceBase(server.getClass().getClassLoader());
         System.err.println("Using BaseResource: " + webResourceBase);
         WebAppContext context = new WebAppContext();
