@@ -1,434 +1,222 @@
 package org.example.test;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+
+import org.junit.jupiter.api.Test;
+
+
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.title.LegendTitle;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+
+import java.awt.geom.Ellipse2D;
+
+import java.io.File;
+
+
+import org.jfree.ui.RectangleEdge;
 
 
 public class AudioClientTest {
-    private static final String GET_PROPERTY_URL = "http://localhost:8080/property?artist=";
-    private static final String GET_ALL_ARTISTS_URL = "http://localhost:8080/artists";
-    private static final String POST_URL = "http://localhost:8080/store";
+	private static final String BASE_URL = "http://localhost:9090/coen6731/audio";
+	private static final int NUM_CLIENTS_10 = 10;
+	private static final int NUM_CLIENTS_50 = 50;
+	private static final int NUM_CLIENTS_100 = 100;
 
-    private static final int[] NUM_CLIENTS = {10, 50, 100};
-    private static final int[][] CLIENT_RATIOS = {{2, 1}, {5, 1}, {10, 1}};
-    private static final String[] ARTISTS = {"artist1", "artist2", "artist3"};
+	@Test
+	void testGetArtistName() throws Exception {
+		String url = "http://localhost:9090/coen6731/audio";
+		HttpClient client = new HttpClient();
+		client.start();
+		Request request = client.newRequest(url);
+		request.param("artistName", "Madonna");
+		ContentResponse response = request.send();
+		assertThat(response.getStatus(), equalTo(200));
+	}
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        for (int numClients : NUM_CLIENTS) {
-            for (int[] clientRatio : CLIENT_RATIOS) {
-                int numGetPropertyRequests = numClients * clientRatio[0] / (clientRatio[0] + clientRatio[1]);
-                int numGetAllArtistsRequests = numClients - numGetPropertyRequests;
-                int numPostRequests = numClients - numGetPropertyRequests - numGetAllArtistsRequests;
+	@Test
+	void testGetAllArtists() throws Exception {
+		String url = "http://localhost:9090/coen6731/audio";
+		HttpClient client = new HttpClient();
+		client.start();
+		Request request = client.newRequest(url);
+		ContentResponse response = request.send();
+		assertThat(response.getStatus(), equalTo(200));
+	}
 
-                ExecutorService executor = Executors.newFixedThreadPool(numClients);
+	@Test
+	void testAudioPost() throws Exception {
+		String url = "http://localhost:9090/coen6731/audio";
+		HttpClient client = new HttpClient();
+		client.start();
+		Request request = client.POST(url);
+		request.param("artistName", "Jack");
+		request.param("trackTitle", "Kind of!");
+		request.param("albumTitle", "Sweet");
+		request.param("trackNumber", "21");
+		request.param("year", "2014");
+		request.param("numReviews", "3053");
+		request.param("numCopiesSold", "30030");
+		ContentResponse response = request.send();
+		assertThat(response.getStatus(), equalTo(200));
 
-                long startTime = System.currentTimeMillis();
-                for (int i = 0; i < numGetPropertyRequests; i++) {
-                    int finalI = i;
-                    executor.submit(() -> {
-                        long requestStartTime = System.currentTimeMillis();
-                        try {
-                            URL url = new URL(GET_PROPERTY_URL + ARTISTS[finalI % ARTISTS.length]);
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            con.setRequestMethod("GET");
-                            Scanner sc = new Scanner(con.getInputStream());
-                            String response = "";
-                            while (sc.hasNext()) {
-                                response += sc.nextLine();
-                            }
-                            System.out.println("GET property response: " + response);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        long requestEndTime = System.currentTimeMillis();
-                        System.out.println("Time taken for GET property request: " + (requestEndTime - requestStartTime) + "ms");
-                    });
-                }
+	}
 
-                for (int i = 0; i < numGetAllArtistsRequests; i++) {
-                    executor.submit(() -> {
-                        long requestStartTime = System.currentTimeMillis();
-                        try {
-                            URL url = new URL(GET_ALL_ARTISTS_URL);
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            con.setExecutorService executor = Executors.newFixedThreadPool(numClients);
-                            long startTime = System.currentTimeMillis();
-                            for (int i = 0; i < numGetPropertyRequests; i++) {
-                            int finalI = i;
-                            executor.submit(() -> {
-                            long requestStartTime = System.currentTimeMillis();
-                            try {
-                            URL url = new URL(GET_PROPERTY_URL + ARTISTS[finalI % ARTISTS.length]);
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            con.setRequestMethod("GET");
-                            Scanner sc = new Scanner(con.getInputStream());
-                            String response = "";
-                            while (sc.hasNext()) {
-                            response += sc.nextLine();
-                            }
-                            System.out.println("GET property response: " + response);
-                            } catch (IOException e) {
-                            e.printStackTrace();
-                            }
-                            long requestEndTime = System.currentTimeMillis();
-                            System.out.println("Time taken for GET property request: " + (requestEndTime - requestStartTime) + "ms");
-                            });
-                            }
+	@Test
+	void testConcurrentRequests() throws Exception {
+		HttpClient client = new HttpClient();
+		client.start();
 
-                            for (int i = 0; i < numGetAllArtistsRequests; i++) {
-                            executor.submit(() -> {
-                            long requestStartTime = System.currentTimeMillis();
-                            try {
-                            URL url = new URL(GET_ALL_ARTISTS_URL);
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            con.setRequestMethod("GET");
-                            Scanner sc = new Scanner(con.getInputStream());
-                            String response = "";
-                            while (sc.hasNext()) {
-                            response += sc.nextLine();
-                            }
-                            System.out.println("GET all artists response: " + response);
-                            } catch (IOException e) {
-                            e.printStackTrace();
-                            }
-                            long requestEndTime = System.currentTimeMillis();
-                            System.out.println("Time taken for GET all artists request: " + (requestEndTime - requestStartTime) + "ms");
-                            });
-                            }
+		long[][][] results = new long[3][3][100];
 
-                            for (int i = 0; i < numPostRequests; i++) {
-                            executor.submit(() -> {
-                            long requestStartTime = System.currentTimeMillis();
-                            try {
-                            URL url = new URL(POST_URL);
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            con.setRequestMethod("POST");
-                            Scanner sc = new Scanner(con.getInputStream());
-                            String response = "";
-                            while (sc.hasNext()) {
-                            response += sc.nextLine();
-                            }
-                            System.out.println("POST response: " + response);
-                            } catch (IOException e) {
-                            e.printStackTrace();
-                            }
-                            long requestEndTime = System.currentTimeMillis();
-                            System.out.println("Time taken for POST request: " + (requestEndTime - requestStartTime) + "ms");
-                            });
-                            }
+		// ratio of GET and POST requests
+		int[][] ratios = { { 2, 1 }, { 5, 1 }, { 10, 1 } };
 
-                            executor.shutdown();
-                            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		// number of clients
+		int[] numClients = { NUM_CLIENTS_10, NUM_CLIENTS_50, NUM_CLIENTS_100 };
 
-                            long endTime = System.currentTimeMillis();
-                            con.setRequestMethod("GET");
-                            Scanner sc = new Scanner(con.getInputStream());
-                            String response = "";
-                            while (sc.hasNext()) {
-                            response += sc.nextLine();
-                            }
-                            System.out.println("GET all artists response: " + response);
-                            } catch (IOException e) {
-                            e.printStackTrace();
-                            }
-                            long requestEndTime = System.currentTimeMillis();
-                            System.out.println("Time taken for GET all artists request: " + (requestEndTime - requestStartTime) + "ms");
-                            });
-                            }
-                for (int i = 0; i < numPostRequests; i++) {
-                    executor.submit(() -> {
-                        long requestStartTime = System.currentTimeMillis();
-                        try {
-                            URL url = new URL(POST_URL);
-                            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                            con.setRequestMethod("POST");
-                            Scanner sc = new Scanner(con.getInputStream());
-                            String response = "";
-                            while (sc.hasNext()) {
-                                response += sc.nextLine();
-                            }
-                            System.out.println("POST response: " + response);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        long requestEndTime = System.currentTimeMillis();
-                        System.out.println("Time taken for POST request: " + (requestEndTime - requestStartTime) + "ms");
-                    });
-                }
+		for (int r = 0; r < ratios.length; r++) {
+			for (int c = 0; c < numClients.length; c++) {
+				long[][] clientResults = new long[100][numClients[c]];
+				Thread[] threads = new Thread[numClients[c]];
+				for (int i = 0; i < numClients[c]; i++) {
+					threads[i] = new Thread(new RequestTask(client, clientResults, i, ratios[r], r));
+				}
+				for (int i = 0; i < numClients[c]; i++) {
+					threads[i].start();
+				}
+				for (int i = 0; i < numClients[c]; i++) {
+					threads[i].join();
+				}
+				// Calculate average time taken for each request
+				for (int i = 0; i < 100; i++) {
+					long sum = 0;
+					for (int j = 0; j < numClients[c]; j++) {
+						sum += clientResults[i][j];
+					}
+					double avgTime = (double) sum / numClients[c];
+					results[r][c][i] = (long) avgTime;
+				}
+			}
+		}
 
-                executor.shutdown();
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		client.stop();
 
-                long endTime = System.currentTimeMillis();
-                System.out.println("Total time taken for " + numClients + " clients with ratio " + clientRatio[0] + ":" + clientRatio[1] + ": " + (endTime - startTime) + "ms");
-                System.out.println();
-            }
-        }
-    }
+		// Plot line chart
+		XYSeriesCollection line_chart_dataset = new XYSeriesCollection();
+
+		for (int r = 0; r < ratios.length; r++) {
+			for (int c = 0; c < numClients.length; c++) {
+				XYSeries series = new XYSeries(
+						"Ratio: " + ratios[r][0] + ":" + ratios[r][1] + ", Clients: " + numClients[c]);
+				for (int i = 0; i < 100; i++) {
+					series.add(i + 1, results[r][c][i]);
+				}
+				line_chart_dataset.addSeries(series);
+			}
+		}
+
+		JFreeChart lineChartObject = ChartFactory.createXYLineChart("Average Response Time vs Number of Clients",
+				"Number of Clients", "Time (ms)", line_chart_dataset, PlotOrientation.VERTICAL, true, true, false);
+
+		// Set line colors and marker styles
+		XYPlot plot = (XYPlot) lineChartObject.getPlot();
+		for (int i = 0; i < plot.getSeriesCount(); i++) {
+			plot.getRenderer().setSeriesPaint(i, Color.getHSBColor((float) i / plot.getSeriesCount(), 1, 1));
+			plot.getRenderer().setSeriesStroke(i, new BasicStroke(2));
+			plot.getRenderer().setSeriesShape(i, new Ellipse2D.Double(-2, -2, 4, 4));
+		}
+
+		// Add legend to the chart
+		LegendTitle legend = lineChartObject.getLegend();
+		legend.setPosition(RectangleEdge.RIGHT);
+		legend.setItemFont(new Font("SansSerif", Font.PLAIN, 14));
+		legend.setBackgroundPaint(new Color(255, 255, 255, 200));
+
+		int width = 1280; /* Width of the image */
+		int height = 720; /* Height of the image */
+		File lineChart = new File("ResponseTimeChart.jpeg");
+		ChartUtilities.saveChartAsJPEG(lineChart, lineChartObject, width, height);
+
+		// Print results
+		System.out.println("\nAverage response time (ms)");
+		System.out.println("--------------------------");
+		System.out.println("Ratio\tClients\t1st\t2nd\t3rd\t4th\t5th\tAverage");
+		for (int r = 0; r < ratios.length; r++) {
+			for (int c = 0; c < numClients.length; c++) {
+				System.out.print(ratios[r][0] + ":" + ratios[r][1] + "\t");
+				System.out.print(numClients[c] + "\t");
+				long[] avgTimes = new long[5];
+				for (int i = 0; i < 5; i++) {
+					avgTimes[i] = results[r][c][i * 20 + 19];
+					System.out.print(avgTimes[i] + "\t");
+				}
+				long sum = 0;
+				for (long time : avgTimes) {
+					sum += time;
+				}
+				double avg = (double) sum / 5;
+				System.out.print(avg + "\n");
+			}
+		}
+	}
+
+	class RequestTask implements Runnable {
+		private HttpClient client;
+		private long[][] results;
+		private int index;
+		private int[] ratios;
+
+		public RequestTask(HttpClient client, long[][] results, int index, int[] ratios, int ratioIndex) {
+			this.client = client;
+			this.results = results;
+			this.index = index;
+			this.ratios = ratios;
+		}
+
+		public void run() {
+			try {
+				long start, end, timeElapsed;
+
+				// Send requests in a loop
+				for (int i = 0; i < 100; i++) {
+					if (i % (ratios[0] + ratios[1]) < ratios[0]) {
+						// Send a GET request
+						start = System.currentTimeMillis();
+						client.GET(BASE_URL + "/1");
+						end = System.currentTimeMillis();
+						timeElapsed = end - start;
+						results[i][index] = timeElapsed;
+					} else {
+						// Send a POST request
+						start = System.currentTimeMillis();
+						client.POST(BASE_URL + "/2");
+						end = System.currentTimeMillis();
+						timeElapsed = end - start;
+						results[i][index] = timeElapsed;
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
 
 }
-
-
-
-
-
-
-
-
-
-
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-//import java.util.concurrent.TimeUnit;
-//
-//import org.apache.http.HttpResponse;
-//import org.apache.http.client.HttpClient;
-//import org.apache.http.client.methods.HttpGet;
-//import org.apache.http.client.methods.HttpPost;
-//import org.apache.http.entity.StringEntity;
-//import org.apache.http.impl.client.HttpClientBuilder;
-//import org.apache.http.util.EntityUtils;
-//
-//
-//public class AudioClientTest {
-//  private static final String BASE_URL = "http://localhost:8080/client";
-//
-//  public static void main(String[] args) throws Exception {
-//    int[] clientCounts = {10, 50, 100};
-//    int[][] requestRatios = {{2, 1}, {5, 1}, {10, 1}};
-//
-//    HttpClient httpClient = HttpClientBuilder.create().build();
-//
-//    for (int clientCount : clientCounts) {
-//      for (int[] requestRatio : requestRatios) {
-//        int getRequestCount = requestRatio[0];
-//        int postRequestCount = requestRatio[1];
-//
-//        ExecutorService executorService = Executors.newFixedThreadPool(clientCount);
-//
-//        for (int i = 0; i < getRequestCount; i++) {
-//          executorService.submit(new GetRequestTask(httpClient));
-//        }
-//        for (int i = 0; i < postRequestCount; i++) {
-//          executorService.submit(new PostRequestTask(httpClient));
-//        }
-//
-//        executorService.shutdown();
-//        executorService.awaitTermination(1, TimeUnit.MINUTES);
-//
-//        // Plotted the line chart with the round-trip times as y-axis and number of clients as x-axis in a different class "LineChartPlotter"
-//        
-//        
-//      }
-//    }
-//  }
-//  
-//  static List<Long> getRoundTripTimes = new ArrayList<>();
-//
-//	//Task for simulating a GET request
-//	private static class GetRequestTask implements Runnable {
-//	 private final HttpClient httpClient;
-//	
-//	 public GetRequestTask(HttpClient httpClient) {
-//	   this.httpClient = httpClient;
-//	 }
-//	
-//	 @Override
-//	 public void run() {
-//	   long startTime = System.currentTimeMillis();
-//	   try {
-//	     HttpGet httpGet = new HttpGet(BASE_URL);
-//	     HttpResponse httpResponse = httpClient.execute(httpGet);
-//	     EntityUtils.consume(httpResponse.getEntity());
-//	   } catch (Exception e) {
-//	     e.printStackTrace();
-//	   }
-//	   long endTime = System.currentTimeMillis();
-//	   getRoundTripTimes.add(endTime - startTime);
-//	 }
-//	}
-//
-//
-//  
-//  static List<Long> postRTTs = new ArrayList<>();
-//
-//  // Task for simulating a POST request
-//
-//  private static class PostRequestTask implements Runnable {
-//    private final HttpClient httpClient;
-//
-//    public PostRequestTask(HttpClient httpClient) {
-//      this.httpClient = httpClient;
-//    }
-//
-//    @Override
-//    public void run() {
-//      long startTime = System.currentTimeMillis();
-//      try {
-//        HttpPost httpPost = new HttpPost(BASE_URL);
-//        StringEntity requestEntity = new StringEntity("{\"data\":\"sample data\"}");
-//        httpPost.setEntity(requestEntity);
-//        HttpResponse httpResponse = httpClient.execute(httpPost);
-//        EntityUtils.consume(httpResponse.getEntity());
-//      } catch (Exception e) {
-//        e.printStackTrace();
-//      }
-//      long endTime = System.currentTimeMillis();
-//      postRTTs.add(endTime - startTime);
-//    }
-//  }
-//  
-//}
-
-	  
-
-
-
-
-//
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-//import java.util.concurrent.TimeUnit;
-//
-//
-//import org.apache.http.client.methods.HttpGet;
-//import org.apache.http.impl.client.CloseableHttpClient;
-//import org.apache.http.impl.client.HttpClients;
-//import org.apache.http.util.EntityUtils;
-//
-//import java.io.IOException;
-//import java.util.concurrent.BlockingQueue;
-//
-//public class AudioClientTest {
-//  // Define the number of clients and the ratio of GET to POST requests
-//  private static final int NUM_CLIENTS = 100;
-//  private static final int GET_RATIO = 2;
-//
-//  public static void main(String[] args) throws InterruptedException {
-//    // Create a thread pool with a fixed number of threads equal to the number of clients
-//    ExecutorService executor = Executors.newFixedThreadPool(NUM_CLIENTS);
-//
-//    // Submit tasks for each client to the thread pool
-//    for (int i = 0; i < NUM_CLIENTS; i++) {
-//      // Determine whether the current client will send a GET or POST request
-//      boolean isGetRequest = (i % (GET_RATIO + 1) == 0);
-//      if (isGetRequest) {
-//        executor.submit(new GetRequestTask(null, null));
-//      } else {
-//        executor.submit(new PostRequestTask());
-//      }
-//    }
-//
-//    // Wait for all tasks to complete
-//    executor.shutdown();
-//    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-//  }
-//  
-//	//Task for simulating a GET request
-//	private static class GetRequestTask implements Runnable {
-//	 private String artistName;
-//	 private BlockingQueue<Long> responseTimes;
-//	 
-//	 public GetRequestTask(String artistName, BlockingQueue<Long> responseTimes) {
-//	   this.artistName = artistName;
-//	   this.responseTimes = responseTimes;
-//	 }
-//	 
-//	 @Override
-//	 public void run() {
-//	   long startTime = System.currentTimeMillis();
-//	   CloseableHttpClient httpClient = HttpClients.createDefault();
-//	   HttpGet httpGet = new HttpGet("http://<server-address>/api/audio?artistName=" + artistName);
-//	   try {
-//	     httpClient.execute(httpGet, response -> {
-//	       EntityUtils.consumeQuietly(response.getEntity());
-//	       return response;
-//	     });
-//	     long endTime = System.currentTimeMillis();
-//	     long roundTripTime = endTime - startTime;
-//	     responseTimes.offer(roundTripTime);
-//	   } catch (IOException e) {
-//	     e.printStackTrace();
-//	   } finally {
-//	     try {
-//	       httpClient.close();
-//	     } catch (IOException e) {
-//	       e.printStackTrace();
-//	     }
-//	   }
-//	 }
-//	}
-//	// Task for simulating a POST request
-//	private static class PostRequestTask implements Runnable {
-//	  @Override
-//	  public void run() {
-//	    // TODO: Add code to send a POST request and measure the round-trip time
-//	    try {
-//	      // Create a new HttpPost request
-//	      HttpPost postRequest = new HttpPost(API_URL);
-//
-//	      // Set the request headers
-//	      postRequest.setHeader("Content-Type", "application/json");
-//	      postRequest.setHeader("Accept", "application/json");
-//
-//	      // Set the request body with the audio item data
-//	      StringEntity requestBody = new StringEntity(createAudioItemJson());
-//	      postRequest.setEntity(requestBody);
-//
-//	      // Record the start time
-//	      long startTime = System.currentTimeMillis();
-//
-//	      // Send the POST request
-//	      HttpResponse response = client.execute(postRequest);
-//
-//	      // Record the end time
-//	      long endTime = System.currentTimeMillis();
-//
-//	      // Check the response status code
-//	      int statusCode = response.getStatusLine().getStatusCode();
-//	      if (statusCode != HttpStatus.SC_OK) {
-//	        System.err.println("POST request failed with status code: " + statusCode);
-//	      }
-//
-//	      // Calculate the round-trip time
-//	      long roundTripTime = endTime - startTime;
-//	      System.out.println("POST request completed in " + roundTripTime + "ms");
-//	    } catch (IOException e) {
-//	      System.err.println("POST request failed: " + e.getMessage());
-//	    }
-//	  }
-//
-//	  private String createAudioItemJson() {
-//	    // TODO: Add code to create a JSON string representing an audio item
-//	    // You can use a library such as Jackson or Gson to serialize the audio item data into a JSON string
-//	  }
-//	}
-//
-//}
-//
-//
-//
-//
-////class GetAudioTask implements Runnable {
-////   @Override
-////   public void run() {
-////      // make GET request to retrieve a property value by giving artist's name as the key
-////      // or retrieve all the artists' data in JSON
-////      // record the round-trip time taken for the request
-////   }
-////}
-////
-////class PostAudioTask implements Runnable {
-////   @Override
-////   public void run() {
-////      // make POST request to store an audio item in the database
-////      // record the round-trip time taken for the request
-////   }
-////}
