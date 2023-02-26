@@ -12,7 +12,7 @@ public class Audio {
     private int numReviews;
     private int numCopiesSold;
     
-  
+  //getters and setters
 
 	public String getId() {
 		return id;
