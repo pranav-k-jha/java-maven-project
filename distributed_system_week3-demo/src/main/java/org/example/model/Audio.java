@@ -77,14 +77,4 @@ public class Audio {
     public void setNumCopiesSold(int numCopiesSold) {
         this.numCopiesSold = numCopiesSold;
     }
-
-	public void setDuration(int i) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public Predicate<Audio> toPredicate() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
