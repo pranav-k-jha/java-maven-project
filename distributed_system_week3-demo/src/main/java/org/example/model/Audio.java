@@ -1,6 +1,5 @@
 package org.example.model;
 
-import java.util.function.Predicate;
 
 public class Audio {
 	private String id;
