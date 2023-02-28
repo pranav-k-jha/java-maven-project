@@ -10,6 +10,7 @@ URL to the project: http://168.138.93.110:9090/coen6731/audio
 To test the project, you can use Postman and try accessing the URL.
 
 In addition, an OpenAPI specification has been created using SwaggerHub to document the endpoints and operations of our distributed software system for storing audio items. This standardized documentation helps developers to interact with the system's API. You can access the SwaggerHub link here: https://app.swaggerhub.com/apis/ITSVISHRUTHKHATRI/Audio/1.0.0
+https://app.swaggerhub.com/apis/PRANAVJHA/AudioAPI/1.0.2
 
 ### Import To Eclipse Java EE Edition
 
