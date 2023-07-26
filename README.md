@@ -7,6 +7,7 @@ functioning as intended.
 
 # Summary:
 
+
 Deployed client/server-based distributed architecture using a free-tier cloud virtual machine.
 
 Utilized Jetty, Tomcat, or Spring framework as the server (Java-based Web Servers).
