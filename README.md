@@ -5,7 +5,8 @@ relevant attributes. Our system is thread-safe and uses an executor and concurre
 specification on SwaggerHub to document the system's endpoints and operations. The system has been deployed on the Oracle Cloud Infrastructure and is 
 functioning as intended.
 
-Summary:
+# Summary:
+
 Deployed client/server-based distributed architecture using a free-tier cloud virtual machine.
 
 Utilized Jetty, Tomcat, or Spring framework as the server (Java-based Web Servers).
