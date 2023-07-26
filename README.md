@@ -7,17 +7,29 @@ functioning as intended.
 
 Summary:
 Deployed client/server-based distributed architecture using a free-tier cloud virtual machine.
+
 Utilized Jetty, Tomcat, or Spring framework as the server (Java-based Web Servers).
+
 Designed open APIs for GET and POST methods for Audio item resource representation.
+
 Implemented open APIs on SwaggerHub and made them public for accessibility.
+
 Created Audio.java class under the Model package with get() and set() methods for audio item properties.
+
 Programmed a Servlet (ResourceServlet.java) in the Controller package to handle GET and POST requests for Audio resource.
+
 Used an in-memory data structure as storage for audio items, ensuring thread safety.
+
 Maintained a sum of the total number of copies sold for all audio items in the database.
+
 Ensured the server was running on a cloud instance, not localhost.
+
 Implemented a bonus feature: multithreaded the Servlet with a thread pool execution.
+
 Developed AudioClientTest.java to simulate concurrent requests from multiple clients with varying ratios of GET and POST requests.
+
 Recorded round-trip time for each request and plotted a line chart to show the correlation between the number of clients and response time.
+
 Prepared a detailed report with necessary screenshots, including the Swagger API page link.
 
 
