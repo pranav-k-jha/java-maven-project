@@ -10,7 +10,7 @@ functioning as intended.
 
 Deployed client/server-based distributed architecture using a free-tier cloud virtual machine.
 
-Utilized Jetty, Tomcat, or Spring framework as the server (Java-based Web Servers).
+Utilized Jetty framework as the server (Java-based Web Servers).
 
 Designed open APIs for GET and POST methods for Audio item resource representation.
 
